@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/recipe_repository.dart';
@@ -26,10 +27,26 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        body: Column(
+        body: Row(
           children: [
-            _SearchBox(onSearchChanged: _updateSearchText),
-            Expanded(child: RecipeListView(searchText: _searchText)),
+            Flexible(
+              flex: 1,
+              child: Column(
+                children: [
+                  _SearchBox(onSearchChanged: _updateSearchText),
+                  Expanded(child: RecipeListView(searchText: _searchText)),
+                ],
+              ),
+            ),
+            Flexible(
+              flex: 1,
+              child: LlmChatView(
+                provider: GeminiProvider(
+                  model: "gemini-1.5-flash",
+                  apiKey: 'AIzaSyBr9f_w_zvq10cf8YiAnGiXX7s35KCJ65Q',
+                ),
+              ),
+            ),
           ],
         ),
       );
