@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
               child: LlmChatView(
                 provider: GeminiProvider(
                   model: "gemini-1.5-flash",
-                  apiKey: GEMINI_API_KEY,
+                  apiKey: geminiApiKey,
                 ),
               ),
             ),
