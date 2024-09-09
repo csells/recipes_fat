@@ -3,6 +3,7 @@ import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/recipe_repository.dart';
+import '../gemini_api_key.dart';
 import '../views/recipe_list_view.dart';
 
 class HomePage extends StatefulWidget {
@@ -43,7 +44,7 @@ class _HomePageState extends State<HomePage> {
               child: LlmChatView(
                 provider: GeminiProvider(
                   model: "gemini-1.5-flash",
-                  apiKey: 'AIzaSyBr9f_w_zvq10cf8YiAnGiXX7s35KCJ65Q',
+                  apiKey: GEMINI_API_KEY,
                 ),
               ),
             ),
