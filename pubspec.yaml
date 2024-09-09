@@ -16,6 +16,8 @@ dependencies:
   path_provider: ^2.1.4
   path: ^1.9.0
   gap: ^3.0.1
+  flutter_ai_toolkit:
+    path: ../other/flutter_ai_toolkit
 
 dev_dependencies:
   flutter_test:
