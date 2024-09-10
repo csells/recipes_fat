@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 class Recipe {
   final String id;
   final String title;
@@ -29,13 +31,13 @@ class Recipe {
         );
 
   factory Recipe.fromJson(Map<String, dynamic> json) => Recipe(
-        id: json['id'],
+        id: json['id'] ?? const Uuid().v4(),
         title: json['title'],
         description: json['description'],
         ingredients: List<String>.from(json['ingredients']),
         instructions: List<String>.from(json['instructions']),
-        tags: List<String>.from(json['tags']),
-        notes: json['notes'],
+        tags: json['tags'] == null ? [] : List<String>.from(json['tags']),
+        notes: json['notes'] ?? '',
       );
 
   Map<String, dynamic> toJson() => {

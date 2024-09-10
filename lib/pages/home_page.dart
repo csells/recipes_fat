@@ -1,9 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/recipe.dart';
 import '../data/recipe_repository.dart';
 import '../gemini_api_key.dart';
+import '../views/recipe_content_view.dart';
 import '../views/recipe_list_view.dart';
 
 class HomePage extends StatefulWidget {
@@ -40,6 +45,10 @@ class _HomePageState extends State<HomePage> {
             ),
             Expanded(
               child: LlmChatView(
+                responseBuilder: (context, response) => _responseBuilder(
+                  context,
+                  response,
+                ),
                 provider: GeminiProvider(
                   model: "gemini-1.5-flash",
                   apiKey: geminiApiKey,
@@ -56,13 +65,14 @@ My food preferences are:
 When you generate a recipe, you should generate a JSON
 object with the following structure:
 {
-  "name": "Recipe Name",
+  "title": "Recipe Title",
   "description": "Recipe Description",
   "ingredients": ["Ingredient 1", "Ingredient 2", "Ingredient 3"],
   "instructions": ["Instruction 1", "Instruction 2", "Instruction 3"]
 }
 
-You should provide a heading before each JSON section called "Recipe".
+You should provide a heading before each JSON section titled with the name of
+the recipe.
 
 You should keep things casual and friendly. Feel free to mix text and JSON
 output.
@@ -80,6 +90,44 @@ output.
         'edit',
         pathParameters: {'recipe': RecipeRepository.newRecipeID},
       );
+
+  static var re =
+      RegExp('```json(?<recipe>.*?)```', multiLine: true, dotAll: true);
+
+  Widget _responseBuilder(BuildContext context, String response) {
+    // find all of the chunks of json that represent recipes
+    final matches = re.allMatches(response);
+
+    var end = 0;
+    final children = <Widget>[];
+    for (final match in matches) {
+      // extract the text before the json
+      if (match.start > end) {
+        final text = response.substring(end, match.start);
+        children.add(MarkdownBody(data: text));
+      }
+
+      // extract the json
+      final json = match.namedGroup('recipe')!;
+      final recipe = Recipe.fromJson(jsonDecode(json));
+      children.add(RecipeContentView(recipe: recipe));
+
+      // make sure we don't include the raw json output
+      end = match.end;
+    }
+
+    // add the remaining text
+    if (end < response.length) {
+      children.add(MarkdownBody(data: response.substring(end)));
+    }
+
+    // return the children as rows in a column
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
 }
 
 class _SearchBox extends StatefulWidget {

@@ -18,6 +18,7 @@ dependencies:
   gap: ^3.0.1
   flutter_ai_toolkit:
     path: ../other/flutter_ai_toolkit
+  flutter_markdown: ^0.7.3+1
 
 dev_dependencies:
   flutter_test:
