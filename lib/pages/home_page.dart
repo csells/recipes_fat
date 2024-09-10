@@ -30,8 +30,7 @@ class _HomePageState extends State<HomePage> {
         ),
         body: Row(
           children: [
-            Flexible(
-              flex: 1,
+            Expanded(
               child: Column(
                 children: [
                   _SearchBox(onSearchChanged: _updateSearchText),
@@ -39,15 +38,22 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            Flexible(
-              flex: 1,
+            Expanded(
               child: LlmChatView(
                 provider: GeminiProvider(
                   model: "gemini-1.5-flash",
                   apiKey: geminiApiKey,
                   systemInstruction: '''
 You are a helpful assistant that generates recipes based on the ingredients and 
-instructions provided. When you generate a recipe, you should generate a JSON
+instructions provided. 
+
+My food preferences are:
+- I don't like mushrooms, tomatoes or cilantro.
+- I love garlic and onions.
+- I avoid milk, so I always replace that with oat milk.
+- I try to keep carbs low, so I always replace that with cauliflower rice.
+
+When you generate a recipe, you should generate a JSON
 object with the following structure:
 {
   "name": "Recipe Name",
@@ -60,12 +66,6 @@ You should provide a heading before each JSON section called "Recipe".
 
 You should keep things casual and friendly. Feel free to mix text and JSON
 output.
-
-My food preferences are:
-- I don't like mushrooms or whole tomatoes or cilantro.
-- I love garlic and onions.
-- I avoid milk, so I always replace that with oat milk.
-- I try to keep carbs low, so I always replace that with cauliflower rice.
 ''',
                 ),
               ),
