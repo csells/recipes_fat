@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/recipe.dart';
@@ -10,6 +11,7 @@ import '../data/recipe_repository.dart';
 import '../gemini_api_key.dart';
 import '../views/recipe_content_view.dart';
 import '../views/recipe_list_view.dart';
+import '../views/search_box.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,17 +40,15 @@ class _HomePageState extends State<HomePage> {
             Expanded(
               child: Column(
                 children: [
-                  _SearchBox(onSearchChanged: _updateSearchText),
+                  SearchBox(onSearchChanged: _updateSearchText),
                   Expanded(child: RecipeListView(searchText: _searchText)),
                 ],
               ),
             ),
             Expanded(
               child: LlmChatView(
-                responseBuilder: (context, response) => _responseBuilder(
-                  context,
-                  response,
-                ),
+                responseBuilder: (context, response) =>
+                    RecipeResponseView(response),
                 provider: GeminiProvider(
                   model: "gemini-1.5-flash",
                   apiKey: geminiApiKey,
@@ -90,11 +90,21 @@ output.
         'edit',
         pathParameters: {'recipe': RecipeRepository.newRecipeID},
       );
+}
 
-  static var re =
-      RegExp('```json(?<recipe>.*?)```', multiLine: true, dotAll: true);
+class RecipeResponseView extends StatelessWidget {
+  const RecipeResponseView(this.response, {super.key});
 
-  Widget _responseBuilder(BuildContext context, String response) {
+  static var re = RegExp(
+    '```json(?<recipe>.*?)```',
+    multiLine: true,
+    dotAll: true,
+  );
+
+  final String response;
+
+  @override
+  Widget build(BuildContext context) {
     // find all of the chunks of json that represent recipes
     final matches = re.allMatches(response);
 
@@ -112,7 +122,15 @@ output.
       final recipe = Recipe.fromJson(jsonDecode(json));
       children.add(RecipeContentView(recipe: recipe));
 
-      // make sure we don't include the raw json output
+      // add a button to add the recipe to the list
+      children.add(const Gap(16));
+      children.add(OutlinedButton(
+        onPressed: () => RecipeRepository.addNewRecipe(recipe),
+        child: const Text('Add Recipe'),
+      ));
+      children.add(const Gap(16));
+
+      // exclude the raw json output
       end = match.end;
     }
 
@@ -123,42 +141,8 @@ output.
 
     // return the children as rows in a column
     return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: children,
     );
   }
-}
-
-class _SearchBox extends StatefulWidget {
-  final Function(String) onSearchChanged;
-
-  const _SearchBox({required this.onSearchChanged});
-
-  @override
-  _SearchBoxState createState() => _SearchBoxState();
-}
-
-class _SearchBoxState extends State<_SearchBox> {
-  final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.all(8),
-        child: TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(
-            labelText: 'Search recipes',
-            border: OutlineInputBorder(),
-            suffixIcon: Icon(Icons.search),
-          ),
-          onChanged: widget.onSearchChanged,
-        ),
-      );
 }
