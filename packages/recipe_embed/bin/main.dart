@@ -1,3 +1,4 @@
+// from https://ai.google.dev/gemini-api/tutorials/document_search
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,12 +11,14 @@ void main(List<String> args) async {
   // await createEmbeddings();
 
   // check embeddings
-  // final recipes = await loadRecipes('../../recipes_grandma_rag.json');
-  // print(recipes.length);
-  // print(recipes.first);
+  final recipes = await loadRecipes('../../recipes_grandma_rag.json');
+  print('${recipes.length} recipes');
+  print('first recipe: ${recipes.first}');
+  print(recipes.first.embedding!.length); // should both be 768
+  print(recipes.last.embedding!.length);
 
   // search embeddings
-  await searchEmbeddings('I want to make an apple cake.');
+  // await searchEmbeddings('I want to make an apple cake.');
 }
 
 Future<void> searchEmbeddings(String query) async {
