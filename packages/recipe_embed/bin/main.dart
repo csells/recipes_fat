@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dartx/dartx.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:recipe_data/recipe.dart';
 
@@ -11,17 +12,27 @@ void main(List<String> args) async {
   // await createEmbeddings();
 
   // check embeddings
-  final recipes = await loadRecipes('../../recipes_grandma_rag.json');
-  print('${recipes.length} recipes');
-  print('first recipe: ${recipes.first}');
-  print(recipes.first.embedding!.length); // should both be 768
-  print(recipes.last.embedding!.length);
+  // final recipes = await loadRecipes('../../recipes_grandma_rag.json');
+  // print('${recipes.length} recipes');
+  // print('first recipe: ${recipes.first}');
+  // print(recipes.first.embedding!.length); // should both be 768
+  // print(recipes.last.embedding!.length);
 
   // search embeddings
-  // await searchEmbeddings('I want to make an apple cake.');
+  final scoredRecipes = await searchEmbeddings(
+    'I want to make an apple cake.',
+    numResults: 3,
+  );
+
+  print(
+    scoredRecipes.map((sr) => '${sr.recipe.title}: ${sr.score}').join('\n'),
+  );
 }
 
-Future<void> searchEmbeddings(String query) async {
+Future<Iterable<({Recipe recipe, double score})>> searchEmbeddings(
+  String query, {
+  int numResults = 1,
+}) async {
   final recipes = await loadRecipes('../../recipes_grandma_rag.json');
   final model = GenerativeModel(
     model: 'text-embedding-004',
@@ -29,10 +40,14 @@ Future<void> searchEmbeddings(String query) async {
   );
   final queryEmbedding = await getQueryEmbedding(model, query);
 
+  final scoredRecipes = <({Recipe recipe, double score})>[];
   for (final recipe in recipes) {
-    final dotProduct = computeDotProduct(recipe.embedding!, queryEmbedding);
-    print('${recipe.title}: $dotProduct');
+    final score = computeDotProduct(recipe.embedding!, queryEmbedding);
+    // print('${recipe.title}: $score');
+    scoredRecipes.add((recipe: recipe, score: score));
   }
+
+  return scoredRecipes.sortedByDescending((r) => r.score).take(numResults);
 }
 
 double computeDotProduct(List<double> a, List<double> b) {
