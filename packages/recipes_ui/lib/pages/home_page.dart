@@ -7,8 +7,8 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:recipe_data/recipe.dart';
 
+import '../../gemini_api_key.dart';
 import '../recipe_repository.dart';
-import '../gemini_api_key.dart';
 import '../views/recipe_content_view.dart';
 import '../views/recipe_list_view.dart';
 import '../views/search_box.dart';

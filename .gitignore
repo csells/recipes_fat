@@ -27,5 +27,4 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
-lib/gemini_api_key.dart
-packages/recipes_ui/lib/gemini_api_key.dart
+gemini_api_key.dart
