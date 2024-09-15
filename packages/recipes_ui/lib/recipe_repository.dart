@@ -6,8 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart' as pp;
-
-import 'recipe.dart';
+import 'package:recipe_data/recipe.dart';
 
 class RecipeRepository {
   static const newRecipeID = '__NEW_RECIPE__';

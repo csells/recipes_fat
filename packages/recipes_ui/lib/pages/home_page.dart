@@ -5,9 +5,9 @@ import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:recipe_data/recipe.dart';
 
-import '../data/recipe.dart';
-import '../data/recipe_repository.dart';
+import '../recipe_repository.dart';
 import '../gemini_api_key.dart';
 import '../views/recipe_content_view.dart';
 import '../views/recipe_list_view.dart';

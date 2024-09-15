@@ -2,9 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:recipe_data/recipe.dart';
 
-import '../data/recipe.dart';
-import '../data/recipe_repository.dart';
+import '../recipe_repository.dart';
 import 'recipe_view.dart';
 
 class RecipeListView extends StatefulWidget {

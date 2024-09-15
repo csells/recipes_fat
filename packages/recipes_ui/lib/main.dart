@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'pages/edit_recipe_page.dart';
 import 'pages/home_page.dart';
-import 'data/recipe_repository.dart';
+import 'recipe_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

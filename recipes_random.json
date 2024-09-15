@@ -1,7 +1,7 @@
 [
   {
     "id": "f8c3de3d-1fea-4d7c-a8b0-29f63c4c3454",
-    "title": "Spaghetti and Meatballs and shit and testing and adding words",
+    "title": "Spaghetti and Meatballs",
     "description": "A classic Italian comfort food dish.",
     "ingredients": [
       "1 pound spaghetti",
@@ -22,7 +22,12 @@
       "Add crushed tomatoes and tomato sauce; simmer for 20 minutes.",
       "Serve meatballs and sauce over cooked spaghetti."
     ],
-    "tags": ["Italian", "pasta", "dinner", "comfort food"],
+    "tags": [
+      "Italian",
+      "pasta",
+      "dinner",
+      "comfort food"
+    ],
     "notes": ""
   },
   {
@@ -49,7 +54,12 @@
       "Pour sauce into the skillet and cook until thickened.",
       "Drizzle with sesame oil and serve over rice."
     ],
-    "tags": ["Asian", "chicken", "quick meal", "stir-fry"],
+    "tags": [
+      "Asian",
+      "chicken",
+      "quick meal",
+      "stir-fry"
+    ],
     "notes": ""
   },
   {
@@ -74,7 +84,12 @@
       "Flip and cook other side until golden brown.",
       "Serve with maple syrup and butter."
     ],
-    "tags": ["breakfast", "sweet", "quick", "vegetarian"],
+    "tags": [
+      "breakfast",
+      "sweet",
+      "quick",
+      "vegetarian"
+    ],
     "notes": ""
   },
   {
@@ -97,7 +112,12 @@
       "Grill salmon for 4-5 minutes per side, or until it flakes easily.",
       "Serve with lemon wedges and your choice of sides."
     ],
-    "tags": ["seafood", "healthy", "grilling", "quick"],
+    "tags": [
+      "seafood",
+      "healthy",
+      "grilling",
+      "quick"
+    ],
     "notes": ""
   },
   {
@@ -122,7 +142,12 @@
       "Bake for 25-30 minutes until cheese is melted and bubbly.",
       "Let cool for 10 minutes before serving."
     ],
-    "tags": ["vegetarian", "Italian", "pasta", "casserole"],
+    "tags": [
+      "vegetarian",
+      "Italian",
+      "pasta",
+      "casserole"
+    ],
     "notes": ""
   },
   {
@@ -146,7 +171,12 @@
       "Fill shells with beef mixture, lettuce, tomatoes, cheese, and sour cream.",
       "Serve immediately."
     ],
-    "tags": ["Mexican", "beef", "quick", "family-friendly"],
+    "tags": [
+      "Mexican",
+      "beef",
+      "quick",
+      "family-friendly"
+    ],
     "notes": ""
   },
   {
@@ -167,7 +197,12 @@
       "Squeeze fresh lemon juice over the salad.",
       "Serve immediately."
     ],
-    "tags": ["salad", "vegetarian", "quick", "side dish"],
+    "tags": [
+      "salad",
+      "vegetarian",
+      "quick",
+      "side dish"
+    ],
     "notes": ""
   },
   {
@@ -193,7 +228,12 @@
       "Bake for 9-11 minutes or until golden brown.",
       "Cool on wire racks."
     ],
-    "tags": ["dessert", "baking", "cookies", "chocolate"],
+    "tags": [
+      "dessert",
+      "baking",
+      "cookies",
+      "chocolate"
+    ],
     "notes": ""
   },
   {
@@ -218,7 +258,12 @@
       "Stir in sour cream until heated through.",
       "Serve over cooked egg noodles."
     ],
-    "tags": ["Russian", "beef", "pasta", "comfort food"],
+    "tags": [
+      "Russian",
+      "beef",
+      "pasta",
+      "comfort food"
+    ],
     "notes": ""
   },
   {
@@ -240,7 +285,12 @@
       "Season with salt and pepper to taste.",
       "Serve immediately at room temperature."
     ],
-    "tags": ["Italian", "salad", "vegetarian", "no-cook"],
+    "tags": [
+      "Italian",
+      "salad",
+      "vegetarian",
+      "no-cook"
+    ],
     "notes": ""
   },
   {
@@ -262,7 +312,12 @@
       "Season with salt and pepper to taste.",
       "Serve immediately at room temperature."
     ],
-    "tags": ["Italian", "salad", "vegetarian", "no-cook"],
+    "tags": [
+      "Italian",
+      "salad",
+      "vegetarian",
+      "no-cook"
+    ],
     "notes": "Recipe for deletion. Delete me!"
   }
 ]

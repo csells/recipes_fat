@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-
-import '../data/recipe.dart';
+import 'package:recipe_data/recipe.dart';
 
 class RecipeContentView extends StatelessWidget {
   const RecipeContentView({
@@ -48,7 +47,10 @@ class _RecipeIngredientsView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Ingredients:', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Ingredients:🍎',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           ...[
             for (final ingredient in recipe.ingredients) Text('• $ingredient')
           ],
@@ -64,11 +66,14 @@ class _RecipeInstructionsView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Instructions:', style: Theme.of(context).textTheme.titleMedium),
-          ...recipe.instructions
-              .asMap()
-              .entries
-              .map((entry) => Text('${entry.key + 1}. ${entry.value}')),
+          Text(
+            'Instructions:🥧',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          ...[
+            for (final entry in recipe.instructions.asMap().entries)
+              Text('${entry.key + 1}. ${entry.value}')
+          ],
         ],
       );
 }

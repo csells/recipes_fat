@@ -265,7 +265,7 @@ packages:
   flutter_ai_toolkit:
     dependency: "direct main"
     description:
-      path: "../other/flutter_ai_toolkit"
+      path: "../../../other/flutter_ai_toolkit"
       relative: true
     source: path
     version: "0.1.2"
@@ -575,6 +575,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  recipe_data:
+    dependency: "direct main"
+    description:
+      path: "../recipe_data"
+      relative: true
+    source: path
+    version: "0.0.1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -693,5 +700,5 @@ packages:
     source: hosted
     version: "1.0.4"
 sdks:
-  dart: ">=3.5.0 <4.0.0"
+  dart: ">=3.5.2 <4.0.0"
   flutter: ">=3.24.0"
