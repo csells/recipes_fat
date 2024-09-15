@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-// TODO: why does it keep losing focus??
-// The LLM chat keeps stealing focus!
 class SearchBox extends StatefulWidget {
   final Function(String) onSearchChanged;
 
