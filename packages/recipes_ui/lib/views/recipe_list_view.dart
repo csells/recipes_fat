@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:recipe_data/recipe.dart';
+import 'package:recipe_data/recipe_data.dart';
 
 import '../recipe_repository.dart';
 import 'recipe_view.dart';

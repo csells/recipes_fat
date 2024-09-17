@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:recipe_data/recipe.dart';
+import 'package:recipe_data/recipe_data.dart';
 
 class RecipeContentView extends StatelessWidget {
   const RecipeContentView({

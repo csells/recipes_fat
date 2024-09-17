@@ -7,8 +7,7 @@ import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:recipe_data/recipe.dart';
+import 'package:recipe_data/recipe_data.dart';
 
 import '../../gemini_api_key.dart';
 import '../recipe_repository.dart';
@@ -47,9 +46,6 @@ object with the following structure:
   "ingredients": ["Ingredient 1", "Ingredient 2", "Ingredient 3"],
   "instructions": ["Instruction 1", "Instruction 2", "Instruction 3"]
 }
-
-You should provide a heading before each JSON section titled with the name of
-the recipe.
 
 You should keep things casual and friendly. Feel free to mix text and JSON
 output.
@@ -104,9 +100,9 @@ output.
     final buffer = StringBuffer();
     if (prompt.toLowerCase().contains('grandma')) {
       final scoredRecipes = await _searchEmbeddings(prompt);
-      final markdown = _recipeToMarkdown(scoredRecipes.first.recipe);
+      final recipeString = scoredRecipes.first.recipe.toString();
       buffer.writeln('# Grandma\'s Recipe:');
-      buffer.write(markdown);
+      buffer.write(recipeString);
       buffer.writeln();
     }
     buffer.writeln(prompt);
@@ -121,62 +117,21 @@ output.
     String query, {
     int numResults = 1,
   }) async {
-    final recipes = await _loadRecipes('../../recipes_grandma_rag.json');
-    final model = GenerativeModel(
-      model: 'text-embedding-004',
-      apiKey: geminiApiKey,
-    );
-    final queryEmbedding = await _getQueryEmbedding(model, query);
+    final json = await File('../../recipes_grandma_rag.json').readAsString();
+    final recipes = await Recipe.loadFrom(json);
+    final embeddings = await RecipeEmbedding.loadFrom(json);
+    final queryEmbedding = await _provider.getQueryEmbedding(query);
 
     final scoredRecipes = <({Recipe recipe, double score})>[];
     for (final recipe in recipes) {
-      final score = _computeDotProduct(recipe.embedding!, queryEmbedding);
-      // print('${recipe.title}: $score');
+      final recipeEmbedding = embeddings.singleWhere((e) => e.id == recipe.id);
+      final score =
+          computeDotProduct(queryEmbedding, recipeEmbedding.embedding);
       scoredRecipes.add((recipe: recipe, score: score));
     }
 
     return scoredRecipes.sortedByDescending((r) => r.score).take(numResults);
   }
-
-  Future<List<Recipe>> _loadRecipes(String filename) async {
-    final file = File(filename);
-    final contents = await file.readAsString();
-    final jsonList = json.decode(contents) as List;
-    return [for (final json in jsonList) Recipe.fromJson(json)];
-  }
-
-  Future<List<double>> _getQueryEmbedding(
-    GenerativeModel model,
-    String query,
-  ) async {
-    final content = Content.text(query);
-    final result = await model.embedContent(
-      content,
-      taskType: TaskType.retrievalQuery,
-    );
-
-    return result.embedding.values;
-  }
-
-  double _computeDotProduct(List<double> a, List<double> b) {
-    double sum = 0.0;
-    for (var i = 0; i < a.length; ++i) {
-      sum += a[i] * b[i];
-    }
-
-    return sum;
-  }
-
-  String _recipeToMarkdown(Recipe recipe) => '''
-# ${recipe.title}
-${recipe.description}
-
-## Ingredients
-${recipe.ingredients.join('\n')}
-
-## Instructions
-${recipe.instructions.join('\n')}
-''';
 }
 
 class RecipeResponseView extends StatelessWidget {
@@ -227,6 +182,7 @@ class RecipeResponseView extends StatelessWidget {
     }
 
     // return the children as rows in a column
+    // TODO: show the title and description; perhaps with a card
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: children,

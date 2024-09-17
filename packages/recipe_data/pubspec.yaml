@@ -1,7 +1,7 @@
 name: recipe_data
 description: "A new Flutter package project."
 version: 0.0.1
-homepage:
+publish_to: none
 
 environment:
   sdk: ^3.5.2
@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_ai_toolkit:
+    path: ../../../other/flutter_ai_toolkit
   uuid: ^4.5.0
 
 dev_dependencies:
