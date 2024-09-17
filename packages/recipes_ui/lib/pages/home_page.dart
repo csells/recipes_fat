@@ -162,7 +162,20 @@ class RecipeResponseView extends StatelessWidget {
       // extract the json
       final json = match.namedGroup('recipe')!;
       final recipe = Recipe.fromJson(jsonDecode(json));
-      children.add(RecipeContentView(recipe: recipe));
+      children.add(const Gap(16));
+      children.add(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              recipe.title,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            Text(recipe.description),
+            RecipeContentView(recipe: recipe),
+          ],
+        ),
+      );
 
       // add a button to add the recipe to the list
       children.add(const Gap(16));
@@ -182,7 +195,6 @@ class RecipeResponseView extends StatelessWidget {
     }
 
     // return the children as rows in a column
-    // TODO: show the title and description; perhaps with a card
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: children,
