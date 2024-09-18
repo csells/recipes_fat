@@ -33,6 +33,54 @@ class _EditRecipePageState extends State<EditRecipePage> {
   late final TextEditingController _ingredientsController;
   late final TextEditingController _instructionsController;
 
+  final _provider = GeminiProvider(
+    chatModel: GenerativeModel(
+      model: "gemini-1.5-flash",
+      apiKey: geminiApiKey,
+      generationConfig: GenerationConfig(
+        responseMimeType: 'application/json',
+        responseSchema: Schema(
+          SchemaType.object,
+          properties: {
+            'modifications': Schema(
+              description: 'The modifications to the recipe you made',
+              SchemaType.string,
+            ),
+            'recipe': Schema(
+              SchemaType.object,
+              properties: {
+                'title': Schema(SchemaType.string),
+                'description': Schema(SchemaType.string),
+                'ingredients': Schema(
+                  SchemaType.array,
+                  items: Schema(SchemaType.string),
+                ),
+                'instructions': Schema(
+                  SchemaType.array,
+                  items: Schema(SchemaType.string),
+                ),
+              },
+            ),
+          },
+        ),
+      ),
+      systemInstruction: Content.system(
+        '''
+You are a helpful assistant that generates recipes based on the ingredients and 
+instructions provided. 
+
+My food preferences are:
+- I don't like mushrooms, tomatoes or cilantro.
+- I love garlic and onions.
+- I avoid milk, so I always replace that with oat milk.
+- I try to keep carbs low, so I try to use appropriate substitutions.
+
+When you generate a recipe, you should generate a JSON object.
+''',
+      ),
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -146,55 +194,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
   }
 
   Future<void> _onMagic() async {
-    final provider = GeminiProvider(
-      chatModel: GenerativeModel(
-        model: "gemini-1.5-flash",
-        apiKey: geminiApiKey,
-        generationConfig: GenerationConfig(
-          responseMimeType: 'application/json',
-          responseSchema: Schema(
-            SchemaType.object,
-            properties: {
-              'modifications': Schema(
-                description: 'The modifications to the recipe you made',
-                SchemaType.string,
-              ),
-              'recipe': Schema(
-                SchemaType.object,
-                properties: {
-                  'title': Schema(SchemaType.string),
-                  'description': Schema(SchemaType.string),
-                  'ingredients': Schema(
-                    SchemaType.array,
-                    items: Schema(SchemaType.string),
-                  ),
-                  'instructions': Schema(
-                    SchemaType.array,
-                    items: Schema(SchemaType.string),
-                  ),
-                },
-              ),
-            },
-          ),
-        ),
-        systemInstruction: Content.system(
-          '''
-You are a helpful assistant that generates recipes based on the ingredients and 
-instructions provided. 
-
-My food preferences are:
-- I don't like mushrooms, tomatoes or cilantro.
-- I love garlic and onions.
-- I avoid milk, so I always replace that with oat milk.
-- I try to keep carbs low, so I try to use appropriate substitutions.
-
-When you generate a recipe, you should generate a JSON object.
-''',
-        ),
-      ),
-    );
-
-    final stream = provider.sendMessageStream(
+    final stream = _provider.sendMessageStream(
       'Generate a modified version of this recipe based on my food preferences: '
       '${_ingredientsController.text}\n\n${_instructionsController.text}',
     );
@@ -247,7 +247,9 @@ When you generate a recipe, you should generate a JSON object.
             content: Text(ex.toString()),
             actions: [
               TextButton(
-                  onPressed: () => context.pop(), child: const Text('OK')),
+                onPressed: () => context.pop(),
+                child: const Text('OK'),
+              ),
             ],
           ),
         );

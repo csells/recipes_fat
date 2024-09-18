@@ -1,13 +1,12 @@
 import 'dart:io';
 
-import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:recipe_data/recipe_data.dart';
 
-import '../../gemini_api_key.dart';
+import '../gemini_api_key.dart';
 import '../recipe_repository.dart';
 import '../views/recipe_list_view.dart';
 import '../views/recipe_response_view.dart';
@@ -33,8 +32,8 @@ class _HomePageState extends State<HomePage> {
       apiKey: geminiApiKey,
       systemInstruction: Content.system(
         '''
-You are a helpful assistant that generates recipes based on the ingredients and 
-instructions provided. 
+You are a helpful assistant that generates recipes based on the ingredients and
+instructions provided.
 
 My food preferences are:
 - I don't like mushrooms, tomatoes or cilantro.
@@ -51,7 +50,7 @@ structure:
   "instructions": ["Instruction 1", "Instruction 2", "Instruction 3"]
 }
 
-You should keep things casual and friendly. Feel free to mix text and JSON
+You should keep things casual and friendly. Feel free to mix rich text and JSON
 output.
 ''',
       ),
@@ -82,10 +81,10 @@ output.
             ),
             Expanded(
               child: LlmChatView(
+                provider: _provider,
                 responseBuilder: (context, response) =>
                     RecipeResponseView(response),
                 messageSender: _messageSender,
-                provider: _provider,
               ),
             ),
           ],
@@ -105,8 +104,7 @@ output.
   }) async* {
     final buffer = StringBuffer();
     if (prompt.toLowerCase().contains('grandma')) {
-      final scoredRecipes = await _searchEmbeddings(prompt);
-      final recipe = scoredRecipes.first.recipe;
+      final recipe = await _searchEmbeddings(prompt);
       buffer.writeln('# Grandma\'s Recipe:');
       buffer.write(recipe.toString());
       buffer.writeln();
@@ -119,23 +117,29 @@ output.
     );
   }
 
-  Future<Iterable<({Recipe recipe, double score})>> _searchEmbeddings(
-    String query, {
-    int numResults = 1,
-  }) async {
-    final json = await File('../../recipes_grandma_rag.json').readAsString();
-    final recipes = await Recipe.loadFrom(json);
-    final embeddings = await RecipeEmbedding.loadFrom(json);
-    final queryEmbedding = await _provider.getQueryEmbedding(query);
+  List<Recipe>? _grandmasRecipes;
+  List<RecipeEmbedding>? _embeddings;
 
-    final scoredRecipes = <({Recipe recipe, double score})>[];
-    for (final recipe in recipes) {
-      final recipeEmbedding = embeddings.singleWhere((e) => e.id == recipe.id);
-      final score =
-          computeDotProduct(queryEmbedding, recipeEmbedding.embedding);
-      scoredRecipes.add((recipe: recipe, score: score));
+  Future<Recipe?> _searchEmbeddings(String prompt) async {
+    if (_embeddings == null) {
+      assert(_grandmasRecipes != null);
+      final json = await File('../../recipes_grandma_rag.json').readAsString();
+      _grandmasRecipes = await Recipe.loadFrom(json);
+      _embeddings = await RecipeEmbedding.loadFrom(json);
     }
 
-    return scoredRecipes.sortedByDescending((r) => r.score).take(numResults);
+    final queryEmbedding = await _provider.getQueryEmbedding(prompt);
+    Recipe? topRecipe;
+    var topScore = 0.0;
+    for (final recipe in _grandmasRecipes!) {
+      final embedding = _embeddings!.singleWhere((e) => e.id == recipe.id);
+      final score = computeDotProduct(queryEmbedding, embedding.embedding);
+      if (score > topScore) {
+        topScore = score;
+        topRecipe = recipe;
+      }
+    }
+
+    return topRecipe;
   }
 }
