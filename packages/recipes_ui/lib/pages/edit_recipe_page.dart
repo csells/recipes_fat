@@ -208,8 +208,15 @@ When you generate a recipe, you should generate a JSON object.
       final accept = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Modifications'),
-          content: Text(_wrapText(modifications)),
+          title: Text(recipe.title),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Modifications:'),
+              const Gap(16),
+              Text(_wrapText(modifications)),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => context.pop(true),
