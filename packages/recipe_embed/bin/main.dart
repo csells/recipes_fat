@@ -61,7 +61,7 @@ double computeDotProduct(List<double> a, List<double> b) {
   return sum;
 }
 
-// TODO: replace with createEmbeddings that creates a separate file
+// todo: replace with createEmbeddings that creates a separate file
 // Future<void> createEmbeddings() async {
 //   final recipes = await loadRecipes('../../recipes_grandma.json');
 //   final model = GenerativeModel(
