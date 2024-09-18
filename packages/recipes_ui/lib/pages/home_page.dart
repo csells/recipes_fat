@@ -1,18 +1,16 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:recipe_data/recipe_data.dart';
 
 import '../../gemini_api_key.dart';
 import '../recipe_repository.dart';
-import '../views/recipe_content_view.dart';
 import '../views/recipe_list_view.dart';
+import '../views/recipe_response_view.dart';
 import '../views/search_box.dart';
 
 class HomePage extends StatefulWidget {
@@ -26,9 +24,15 @@ class _HomePageState extends State<HomePage> {
   String _searchText = '';
 
   final _provider = GeminiProvider(
-    model: "gemini-1.5-flash",
-    apiKey: geminiApiKey,
-    systemInstruction: '''
+    embeddingModel: GenerativeModel(
+      model: 'text-embedding-004',
+      apiKey: geminiApiKey,
+    ),
+    chatModel: GenerativeModel(
+      model: "gemini-1.5-flash",
+      apiKey: geminiApiKey,
+      systemInstruction: Content.system(
+        '''
 You are a helpful assistant that generates recipes based on the ingredients and 
 instructions provided. 
 
@@ -38,8 +42,8 @@ My food preferences are:
 - I avoid milk, so I always replace that with oat milk.
 - I try to keep carbs low, so I try to use appropriate substitutions.
 
-When you generate a recipe, you should generate a JSON
-object with the following structure:
+When you generate a recipe, you should generate a JSON object with the following
+structure:
 {
   "title": "Recipe Title",
   "description": "Recipe Description",
@@ -50,6 +54,8 @@ object with the following structure:
 You should keep things casual and friendly. Feel free to mix text and JSON
 output.
 ''',
+      ),
+    ),
   );
 
   @override
@@ -78,7 +84,7 @@ output.
               child: LlmChatView(
                 responseBuilder: (context, response) =>
                     RecipeResponseView(response),
-                streamGenerator: _generateStream,
+                messageSender: _messageSender,
                 provider: _provider,
               ),
             ),
@@ -93,21 +99,21 @@ output.
         pathParameters: {'recipe': RecipeRepository.newRecipeID},
       );
 
-  Stream<String> _generateStream(
+  Stream<String> _messageSender(
     String prompt, {
     Iterable<Attachment> attachments = const [],
   }) async* {
     final buffer = StringBuffer();
     if (prompt.toLowerCase().contains('grandma')) {
       final scoredRecipes = await _searchEmbeddings(prompt);
-      final recipeString = scoredRecipes.first.recipe.toString();
+      final recipe = scoredRecipes.first.recipe;
       buffer.writeln('# Grandma\'s Recipe:');
-      buffer.write(recipeString);
+      buffer.write(recipe.toString());
       buffer.writeln();
     }
     buffer.writeln(prompt);
 
-    yield* _provider.generateStream(
+    yield* _provider.sendMessageStream(
       buffer.toString(),
       attachments: attachments,
     );
@@ -131,73 +137,5 @@ output.
     }
 
     return scoredRecipes.sortedByDescending((r) => r.score).take(numResults);
-  }
-}
-
-class RecipeResponseView extends StatelessWidget {
-  const RecipeResponseView(this.response, {super.key});
-
-  static var re = RegExp(
-    '```json(?<recipe>.*?)```',
-    multiLine: true,
-    dotAll: true,
-  );
-
-  final String response;
-
-  @override
-  Widget build(BuildContext context) {
-    // find all of the chunks of json that represent recipes
-    final matches = re.allMatches(response);
-
-    var end = 0;
-    final children = <Widget>[];
-    for (final match in matches) {
-      // extract the text before the json
-      if (match.start > end) {
-        final text = response.substring(end, match.start);
-        children.add(MarkdownBody(data: text));
-      }
-
-      // extract the json
-      final json = match.namedGroup('recipe')!;
-      final recipe = Recipe.fromJson(jsonDecode(json));
-      children.add(const Gap(16));
-      children.add(
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              recipe.title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            Text(recipe.description),
-            RecipeContentView(recipe: recipe),
-          ],
-        ),
-      );
-
-      // add a button to add the recipe to the list
-      children.add(const Gap(16));
-      children.add(OutlinedButton(
-        onPressed: () => RecipeRepository.addNewRecipe(recipe),
-        child: const Text('Add Recipe'),
-      ));
-      children.add(const Gap(16));
-
-      // exclude the raw json output
-      end = match.end;
-    }
-
-    // add the remaining text
-    if (end < response.length) {
-      children.add(MarkdownBody(data: response.substring(end)));
-    }
-
-    // return the children as rows in a column
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
-    );
   }
 }

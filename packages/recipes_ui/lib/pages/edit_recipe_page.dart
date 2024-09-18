@@ -1,12 +1,17 @@
 // NOTE: RB: 240826: Switched to a form for editing recipes. Added text hints
 // and validation for required fields.
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:recipe_data/recipe_data.dart';
 import 'package:uuid/uuid.dart';
 
+import '../gemini_api_key.dart';
 import '../recipe_repository.dart';
 
 class EditRecipePage extends StatefulWidget {
@@ -87,7 +92,7 @@ class _EditRecipePageState extends State<EditRecipePage> {
                 TextField(
                   controller: _ingredientsController,
                   decoration: const InputDecoration(
-                    labelText: 'Ingredients (one per line)',
+                    labelText: 'Ingredients🍎 (one per line)',
                     hintText: 'e.g., 2 cups flour\n1 tsp salt\n1 cup sugar',
                   ),
                   maxLines: null,
@@ -95,15 +100,24 @@ class _EditRecipePageState extends State<EditRecipePage> {
                 TextField(
                   controller: _instructionsController,
                   decoration: const InputDecoration(
-                    labelText: 'Instructions (one per line)',
+                    labelText: 'Instructions🥧 (one per line)',
                     hintText: 'e.g., Mix ingredients\nBake for 30 minutes',
                   ),
                   maxLines: null,
                 ),
                 const Gap(16),
-                OutlinedButton(
-                  onPressed: _onDone,
-                  child: const Text('Done'),
+                OverflowBar(
+                  spacing: 16,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _onMagic,
+                      child: const Text('Magic'),
+                    ),
+                    OutlinedButton(
+                      onPressed: _onDone,
+                      child: const Text('Done'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -129,5 +143,128 @@ class _EditRecipePageState extends State<EditRecipePage> {
     }
 
     if (context.mounted) context.goNamed('home');
+  }
+
+  Future<void> _onMagic() async {
+    final provider = GeminiProvider(
+      chatModel: GenerativeModel(
+        model: "gemini-1.5-flash",
+        apiKey: geminiApiKey,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+          responseSchema: Schema(
+            SchemaType.object,
+            properties: {
+              'modifications': Schema(
+                description: 'The modifications to the recipe you made',
+                SchemaType.string,
+              ),
+              'recipe': Schema(
+                SchemaType.object,
+                properties: {
+                  'title': Schema(SchemaType.string),
+                  'description': Schema(SchemaType.string),
+                  'ingredients': Schema(
+                    SchemaType.array,
+                    items: Schema(SchemaType.string),
+                  ),
+                  'instructions': Schema(
+                    SchemaType.array,
+                    items: Schema(SchemaType.string),
+                  ),
+                },
+              ),
+            },
+          ),
+        ),
+        systemInstruction: Content.system(
+          '''
+You are a helpful assistant that generates recipes based on the ingredients and 
+instructions provided. 
+
+My food preferences are:
+- I don't like mushrooms, tomatoes or cilantro.
+- I love garlic and onions.
+- I avoid milk, so I always replace that with oat milk.
+- I try to keep carbs low, so I try to use appropriate substitutions.
+
+When you generate a recipe, you should generate a JSON object.
+''',
+        ),
+      ),
+    );
+
+    final stream = provider.sendMessageStream(
+      'Generate a modified version of this recipe based on my food preferences: '
+      '${_ingredientsController.text}\n\n${_instructionsController.text}',
+    );
+    var response = await stream.join();
+    final json = jsonDecode(response);
+
+    try {
+      final modifications = json['modifications'];
+      final recipe = Recipe.fromJson(json['recipe']);
+
+      final accept = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Modifications'),
+          content: Text(_wrapText(modifications)),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(true),
+              child: const Text('Accept'),
+            ),
+            TextButton(
+              onPressed: () => context.pop(false),
+              child: const Text('Reject'),
+            ),
+          ],
+        ),
+      );
+
+      if (accept == true) {
+        setState(() {
+          _titleController.text = recipe.title;
+          _descriptionController.text = recipe.description;
+          _ingredientsController.text = recipe.ingredients.join('\n');
+          _instructionsController.text = recipe.instructions.join('\n');
+        });
+      }
+    } catch (ex) {
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(ex.toString()),
+            actions: [
+              TextButton(
+                  onPressed: () => context.pop(), child: const Text('OK')),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  String _wrapText(String text, {int lineLength = 80}) {
+    final words = text.split(RegExp(r'\s+'));
+    final lines = <String>[];
+
+    var currentLine = '';
+    for (final word in words) {
+      if (currentLine.isEmpty) {
+        currentLine = word;
+      } else if (('$currentLine $word').length <= lineLength) {
+        currentLine += ' $word';
+      } else {
+        lines.add(currentLine);
+        currentLine = word;
+      }
+    }
+
+    if (currentLine.isNotEmpty) lines.add(currentLine);
+    return lines.join('\n');
   }
 }

@@ -31,19 +31,22 @@ class RecipeView extends StatelessWidget {
               onExpansionChanged: onExpansionChanged,
               children: [
                 RecipeContentView(recipe: recipe),
-                OverflowBar(
-                  spacing: 8,
-                  alignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      onPressed: onDelete,
-                      child: const Text('Delete'),
-                    ),
-                    OutlinedButton(
-                      onPressed: onEdit,
-                      child: const Text('Edit'),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: OverflowBar(
+                    spacing: 8,
+                    alignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                        onPressed: onDelete,
+                        child: const Text('Delete'),
+                      ),
+                      OutlinedButton(
+                        onPressed: onEdit,
+                        child: const Text('Edit'),
+                      ),
+                    ],
+                  ),
                 ),
                 const Gap(16),
               ],
