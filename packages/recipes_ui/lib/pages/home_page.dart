@@ -12,14 +12,15 @@ import '../views/recipe_list_view.dart';
 import '../views/recipe_response_view.dart';
 import '../views/search_box.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class ResponsiveHomePage extends StatefulWidget {
+  const ResponsiveHomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _ResponsiveHomePageState createState() => _ResponsiveHomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _ResponsiveHomePageState extends State<ResponsiveHomePage>
+    with SingleTickerProviderStateMixin {
   String _searchText = '';
 
   final _provider = GeminiProvider(
@@ -69,23 +70,23 @@ output.
             ),
           ],
         ),
-        body: Row(
+        body: _RowOrTabBar(
+          tabs: const [
+            Tab(text: 'Recipes'),
+            Tab(text: 'Chat'),
+          ],
           children: [
-            Expanded(
-              child: Column(
-                children: [
-                  SearchBox(onSearchChanged: _updateSearchText),
-                  Expanded(child: RecipeListView(searchText: _searchText)),
-                ],
-              ),
+            Column(
+              children: [
+                SearchBox(onSearchChanged: _updateSearchText),
+                Expanded(child: RecipeListView(searchText: _searchText)),
+              ],
             ),
-            Expanded(
-              child: LlmChatView(
-                provider: _provider,
-                responseBuilder: (context, response) =>
-                    RecipeResponseView(response),
-                messageSender: _messageSender,
-              ),
+            LlmChatView(
+              provider: _provider,
+              responseBuilder: (context, response) =>
+                  RecipeResponseView(response),
+              messageSender: _messageSender,
             ),
           ],
         ),
@@ -142,4 +143,44 @@ output.
 
     return topRecipe;
   }
+}
+
+class _RowOrTabBar extends StatefulWidget {
+  const _RowOrTabBar({required this.tabs, required this.children});
+  final List<Widget> tabs;
+  final List<Widget> children;
+
+  @override
+  State<_RowOrTabBar> createState() => _RowOrTabBarState();
+}
+
+class _RowOrTabBarState extends State<_RowOrTabBar>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: widget.tabs.length, vsync: this);
+  }
+
+  @override
+  Widget build(BuildContext context) => MediaQuery.of(context).size.width > 600
+      ? Row(
+          children: [for (var child in widget.children) Expanded(child: child)],
+        )
+      : Column(
+          children: [
+            TabBar(
+              controller: _tabController,
+              tabs: widget.tabs,
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: widget.children,
+              ),
+            ),
+          ],
+        );
 }
