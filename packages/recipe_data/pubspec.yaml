@@ -13,11 +13,12 @@ dependencies:
   flutter_ai_toolkit:
     path: ../../../other/flutter_ai_toolkit
   uuid: ^4.5.0
+  google_generative_ai: ^0.4.6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

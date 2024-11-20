@@ -19,7 +19,7 @@ class App extends StatelessWidget {
       GoRoute(
         name: 'home',
         path: '/',
-        builder: (BuildContext context, _) => const ResponsiveHomePage(),
+        builder: (context, _) => const HomePage(),
         routes: [
           GoRoute(
             name: 'edit',

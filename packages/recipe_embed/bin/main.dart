@@ -8,15 +8,25 @@ import 'package:recipe_data/recipe_data.dart';
 
 import 'gemini_api_key.dart';
 
+const filenameRecipes = '../../recipes_grandma.json';
+const filenameEmbeddings = '../../embeddings_grandma.json';
+
+final embeddingsModel = GenerativeModel(
+  model: 'text-embedding-004',
+  apiKey: geminiApiKey,
+);
+
 void main(List<String> args) async {
   // await createEmbeddings();
 
-  // check embeddings
-  // final recipes = await loadRecipes('../../recipes_grandma_rag.json');
+  // // check embeddings
+  // final recipes = await loadRecipes(filenameRecipes);
+  // final embeddings = await loadEmbeddings(filenameEmbeddings);
   // print('${recipes.length} recipes');
+  // print('${embeddings.length} embeddings');
   // print('first recipe: ${recipes.first}');
-  // print(recipes.first.embedding!.length); // should both be 768
-  // print(recipes.last.embedding!.length);
+  // print(embeddings.first.embedding.length); // should both be 768
+  // print(embeddings.last.embedding.length);
 
   // search embeddings
   final scoredRecipes = await searchEmbeddings(
@@ -33,52 +43,39 @@ Future<Iterable<({Recipe recipe, double score})>> searchEmbeddings(
   String query, {
   int numResults = 1,
 }) async {
-  final recipes = await loadRecipes('../../recipes_grandma_rag.json');
-  final model = GenerativeModel(
-    model: 'text-embedding-004',
-    apiKey: geminiApiKey,
-  );
-  final embeddings = await loadEmbeddings('../../recipes_grandma_rag.json');
-  final queryEmbedding = await getQueryEmbedding(model, query);
+  final recipes = await loadRecipes(filenameRecipes);
+  final embeddings = await loadEmbeddings(filenameEmbeddings);
+  final queryEmbedding = await getQueryEmbedding(query);
 
   final scoredRecipes = <({Recipe recipe, double score})>[];
   for (final recipe in recipes) {
     final recipeEmbedding = embeddings.singleWhere((e) => e.id == recipe.id);
-    final score = computeDotProduct(queryEmbedding, recipeEmbedding.embedding);
-    // print('${recipe.title}: $score');
-    scoredRecipes.add((recipe: recipe, score: score));
+    final dotProduct = GeminiEmbeddingHelper.computeDotProduct(
+      queryEmbedding,
+      recipeEmbedding.embedding,
+    );
+    // print('${recipe.title}: $dotProduct');
+    scoredRecipes.add((recipe: recipe, score: dotProduct));
   }
 
   return scoredRecipes.sortedByDescending((r) => r.score).take(numResults);
 }
 
-double computeDotProduct(List<double> a, List<double> b) {
-  double sum = 0.0;
-  for (var i = 0; i < a.length; ++i) {
-    sum += a[i] * b[i];
+Future<void> createEmbeddings() async {
+  final recipes = await loadRecipes(filenameRecipes);
+  final embeddings = <RecipeEmbedding>[];
+  for (final recipe in recipes) {
+    final embedding = await getDocumentEmbedding(recipe);
+    final recipeEmbedding = RecipeEmbedding(
+      id: recipe.id,
+      embedding: embedding,
+    );
+    embeddings.add(recipeEmbedding);
+    print('${embeddings.length} / ${recipes.length}');
   }
 
-  return sum;
+  await saveEmbeddings(filenameEmbeddings, embeddings);
 }
-
-// todo: replace with createEmbeddings that creates a separate file
-// Future<void> createEmbeddings() async {
-//   final recipes = await loadRecipes('../../recipes_grandma.json');
-//   final model = GenerativeModel(
-//     model: 'text-embedding-004',
-//     apiKey: geminiApiKey,
-//   );
-
-//   final recipesWithEmbeddings = <Recipe>[];
-//   for (final recipe in recipes) {
-//     final embedding = await getDocumentEmbedding(model, recipe);
-//     final recipeWithEmbedding = recipe.copyWith(embedding: embedding);
-//     recipesWithEmbeddings.add(recipeWithEmbedding);
-//     print('${recipesWithEmbeddings.length} / ${recipes.length}');
-//   }
-
-//   await saveRecipes('../../recipes_grandma_rag.json', recipesWithEmbeddings);
-// }
 
 Future<List<Recipe>> loadRecipes(String filename) async {
   final json = await File(filename).readAsString();
@@ -86,8 +83,11 @@ Future<List<Recipe>> loadRecipes(String filename) async {
   return [for (final json in jsonList) Recipe.fromJson(json)];
 }
 
-Future<void> saveRecipes(String filename, List<Recipe> recipes) async {
-  final jsonString = jsonEncode(recipes.map((r) => r.toJson()).toList());
+Future<void> saveEmbeddings(
+  String filename,
+  List<RecipeEmbedding> embeddings,
+) async {
+  final jsonString = jsonEncode(embeddings.map((e) => e.toJson()).toList());
   await File(filename).writeAsString(jsonString);
 }
 
@@ -97,13 +97,10 @@ Future<List<RecipeEmbedding>> loadEmbeddings(String filename) async {
   return [for (final json in jsonList) RecipeEmbedding.fromJson(json)];
 }
 
-Future<List<double>> getDocumentEmbedding(
-  GenerativeModel model,
-  Recipe recipe,
-) async {
-  final md = _recipeToMarkdown(recipe);
+Future<List<double>> getDocumentEmbedding(Recipe recipe) async {
+  final md = recipeToMarkdown(recipe);
   final content = Content.text(md);
-  final result = await model.embedContent(
+  final result = await embeddingsModel.embedContent(
     content,
     taskType: TaskType.retrievalDocument,
   );
@@ -111,12 +108,9 @@ Future<List<double>> getDocumentEmbedding(
   return result.embedding.values;
 }
 
-Future<List<double>> getQueryEmbedding(
-  GenerativeModel model,
-  String query,
-) async {
+Future<List<double>> getQueryEmbedding(String query) async {
   final content = Content.text(query);
-  final result = await model.embedContent(
+  final result = await embeddingsModel.embedContent(
     content,
     taskType: TaskType.retrievalQuery,
   );
@@ -124,7 +118,7 @@ Future<List<double>> getQueryEmbedding(
   return result.embedding.values;
 }
 
-String _recipeToMarkdown(Recipe recipe) => '''
+String recipeToMarkdown(Recipe recipe) => '''
 # ${recipe.title}
 ${recipe.description}
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -11,7 +12,7 @@ import 'recipe_content_view.dart';
 class RecipeResponseView extends StatelessWidget {
   const RecipeResponseView(this.response, {super.key});
 
-  static var re = RegExp(
+  static final _re = RegExp(
     '```json(?<recipe>.*?)```',
     multiLine: true,
     dotAll: true,
@@ -22,7 +23,7 @@ class RecipeResponseView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // find all of the chunks of json that represent recipes
-    final matches = re.allMatches(response);
+    final matches = _re.allMatches(response);
 
     var end = 0;
     final children = <Widget>[];
@@ -49,7 +50,7 @@ class RecipeResponseView extends StatelessWidget {
       // add a button to add the recipe to the list
       children.add(const Gap(16));
       children.add(OutlinedButton(
-        onPressed: () => RecipeRepository.addNewRecipe(recipe),
+        onPressed: () => unawaited(RecipeRepository.addNewRecipe(recipe)),
         child: const Text('Add Recipe'),
       ));
       children.add(const Gap(16));

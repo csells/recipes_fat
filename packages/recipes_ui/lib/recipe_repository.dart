@@ -64,7 +64,7 @@ class RecipeRepository {
     final recipeFile = await _recipeFile;
 
     // seed empty recipe file w/ example recipes
-    final contents = await recipeFile.exists()
+    final contents = recipeFile.existsSync()
         ? await recipeFile.readAsString()
         : await rootBundle.loadString(_assetFileName);
 

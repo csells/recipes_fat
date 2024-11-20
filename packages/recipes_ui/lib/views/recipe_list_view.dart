@@ -1,5 +1,7 @@
 // NOTE: 240826: Now sorting recipe list by title
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:recipe_data/recipe_data.dart';
@@ -8,9 +10,8 @@ import '../recipe_repository.dart';
 import 'recipe_view.dart';
 
 class RecipeListView extends StatefulWidget {
+  const RecipeListView({required this.searchText, super.key});
   final String searchText;
-
-  const RecipeListView({super.key, required this.searchText});
 
   @override
   _RecipeListViewState createState() => _RecipeListViewState();
@@ -51,11 +52,11 @@ class _RecipeListViewState extends State<RecipeListView> {
               return RecipeView(
                 key: ValueKey(recipeId),
                 recipe: recipe,
-                expanded: _expanded[recipeId] == true,
+                expanded: _expanded[recipeId] ?? false,
                 onExpansionChanged: (expanded) =>
                     _onExpand(recipe.id, expanded),
                 onEdit: () => _onEdit(recipe),
-                onDelete: () => _onDelete(recipe),
+                onDelete: () => unawaited(_onDelete(recipe)),
               );
             },
           );
@@ -70,7 +71,7 @@ class _RecipeListViewState extends State<RecipeListView> {
         pathParameters: {'recipe': recipe.id},
       );
 
-  void _onDelete(Recipe recipe) async {
+  Future<void> _onDelete(Recipe recipe) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -91,6 +92,6 @@ class _RecipeListViewState extends State<RecipeListView> {
       ),
     );
 
-    if (shouldDelete == true) await RecipeRepository.deleteRecipe(recipe);
+    if (shouldDelete ?? false) await RecipeRepository.deleteRecipe(recipe);
   }
 }

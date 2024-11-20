@@ -11,25 +11,27 @@ import '../recipe_repository.dart';
 import '../views/recipe_list_view.dart';
 import '../views/recipe_response_view.dart';
 import '../views/search_box.dart';
+import '../views/split_or_tabs.dart';
 
-class ResponsiveHomePage extends StatefulWidget {
-  const ResponsiveHomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  _ResponsiveHomePageState createState() => _ResponsiveHomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _ResponsiveHomePageState extends State<ResponsiveHomePage>
+class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   String _searchText = '';
 
+  final embeddingModel = GenerativeModel(
+    model: 'text-embedding-004',
+    apiKey: geminiApiKey,
+  );
+
   final _provider = GeminiProvider(
-    embeddingModel: GenerativeModel(
-      model: 'text-embedding-004',
-      apiKey: geminiApiKey,
-    ),
-    chatModel: GenerativeModel(
-      model: "gemini-1.5-flash",
+    model: GenerativeModel(
+      model: 'gemini-1.5-flash',
       apiKey: geminiApiKey,
       systemInstruction: Content.system(
         '''
@@ -70,7 +72,7 @@ output.
             ),
           ],
         ),
-        body: _RowOrTabBar(
+        body: SplitOrTabs(
           tabs: const [
             Tab(text: 'Recipes'),
             Tab(text: 'Chat'),
@@ -106,7 +108,7 @@ output.
     final buffer = StringBuffer();
     if (prompt.toLowerCase().contains('grandma')) {
       final recipe = await _searchEmbeddings(prompt);
-      buffer.writeln('# Grandma\'s Recipe:');
+      buffer.writeln("# Grandma's Recipe:");
       buffer.write(recipe.toString());
       buffer.writeln();
     }
@@ -123,18 +125,24 @@ output.
 
   Future<Recipe?> _searchEmbeddings(String prompt) async {
     if (_embeddings == null) {
-      assert(_grandmasRecipes != null);
+      assert(_grandmasRecipes == null);
       final json = await File('../../recipes_grandma_rag.json').readAsString();
       _grandmasRecipes = await Recipe.loadFrom(json);
       _embeddings = await RecipeEmbedding.loadFrom(json);
     }
 
-    final queryEmbedding = await _provider.getQueryEmbedding(prompt);
+    final embeddingHelper = GeminiEmbeddingHelper(embeddingModel);
+
+    final queryEmbedding = await embeddingHelper.getQueryEmbedding(prompt);
     Recipe? topRecipe;
     var topScore = 0.0;
     for (final recipe in _grandmasRecipes!) {
       final embedding = _embeddings!.singleWhere((e) => e.id == recipe.id);
-      final score = computeDotProduct(queryEmbedding, embedding.embedding);
+      final score = GeminiEmbeddingHelper.computeDotProduct(
+        queryEmbedding,
+        embedding.embedding,
+      );
+
       if (score > topScore) {
         topScore = score;
         topRecipe = recipe;
@@ -143,44 +151,4 @@ output.
 
     return topRecipe;
   }
-}
-
-class _RowOrTabBar extends StatefulWidget {
-  const _RowOrTabBar({required this.tabs, required this.children});
-  final List<Widget> tabs;
-  final List<Widget> children;
-
-  @override
-  State<_RowOrTabBar> createState() => _RowOrTabBarState();
-}
-
-class _RowOrTabBarState extends State<_RowOrTabBar>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: widget.tabs.length, vsync: this);
-  }
-
-  @override
-  Widget build(BuildContext context) => MediaQuery.of(context).size.width > 600
-      ? Row(
-          children: [for (var child in widget.children) Expanded(child: child)],
-        )
-      : Column(
-          children: [
-            TabBar(
-              controller: _tabController,
-              tabs: widget.tabs,
-            ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: widget.children,
-              ),
-            ),
-          ],
-        );
 }

@@ -1,6 +1,10 @@
 // NOTE: RB: 240826: Switched to a form for editing recipes. Added text hints
 // and validation for required fields.
 
+// using json in this file
+// ignore_for_file: avoid_dynamic_calls
+
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -16,8 +20,8 @@ import '../recipe_repository.dart';
 
 class EditRecipePage extends StatefulWidget {
   const EditRecipePage({
-    super.key,
     required this.recipe,
+    super.key,
   });
 
   final Recipe recipe;
@@ -34,8 +38,8 @@ class _EditRecipePageState extends State<EditRecipePage> {
   late final TextEditingController _instructionsController;
 
   final _provider = GeminiProvider(
-    chatModel: GenerativeModel(
-      model: "gemini-1.5-flash",
+    model: GenerativeModel(
+      model: 'gemini-1.5-flash',
       apiKey: geminiApiKey,
       generationConfig: GenerationConfig(
         responseMimeType: 'application/json',
@@ -116,7 +120,7 @@ When you generate a recipe, you should generate a JSON object.
         body: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 TextFormField(
@@ -185,9 +189,9 @@ When you generate a recipe, you should generate a JSON object.
     );
 
     if (_isNewRecipe) {
-      RecipeRepository.addNewRecipe(recipe);
+      unawaited(RecipeRepository.addNewRecipe(recipe));
     } else {
-      RecipeRepository.updateRecipe(recipe);
+      unawaited(RecipeRepository.updateRecipe(recipe));
     }
 
     if (context.mounted) context.goNamed('home');
@@ -195,17 +199,20 @@ When you generate a recipe, you should generate a JSON object.
 
   Future<void> _onMagic() async {
     final stream = _provider.sendMessageStream(
-      'Generate a modified version of this recipe based on my food preferences: '
+      'Generate a modified version of this recipe using my food preferences: '
       '${_ingredientsController.text}\n\n${_instructionsController.text}',
     );
-    var response = await stream.join();
+    final response = await stream.join();
     final json = jsonDecode(response);
 
     try {
       final modifications = json['modifications'];
       final recipe = Recipe.fromJson(json['recipe']);
 
+      if (!context.mounted) return;
       final accept = await showDialog<bool>(
+        // I checked for context.mounted above, but the linter still complains!
+        // ignore: use_build_context_synchronously
         context: context,
         builder: (context) => AlertDialog(
           title: Text(recipe.title),
@@ -230,7 +237,7 @@ When you generate a recipe, you should generate a JSON object.
         ),
       );
 
-      if (accept == true) {
+      if (accept ?? false) {
         setState(() {
           _titleController.text = recipe.title;
           _descriptionController.text = recipe.description;
@@ -238,9 +245,13 @@ When you generate a recipe, you should generate a JSON object.
           _instructionsController.text = recipe.instructions.join('\n');
         });
       }
+      // I want errors and exceptions
+      // ignore: avoid_catches_without_on_clauses
     } catch (ex) {
       if (context.mounted) {
-        showDialog(
+        await showDialog(
+          // I checked for context.mounted above, but the linter still complains
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Error'),
@@ -265,7 +276,7 @@ When you generate a recipe, you should generate a JSON object.
     for (final word in words) {
       if (currentLine.isEmpty) {
         currentLine = word;
-      } else if (('$currentLine $word').length <= lineLength) {
+      } else if ('$currentLine $word'.length <= lineLength) {
         currentLine += ' $word';
       } else {
         lines.add(currentLine);

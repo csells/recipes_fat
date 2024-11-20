@@ -4,8 +4,8 @@ import 'package:recipe_data/recipe_data.dart';
 
 class RecipeContentView extends StatelessWidget {
   const RecipeContentView({
-    super.key,
     required this.recipe,
+    super.key,
   });
 
   final Recipe recipe;
