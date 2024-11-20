@@ -106,38 +106,64 @@ output.
     Iterable<Attachment> attachments = const [],
   }) async* {
     final buffer = StringBuffer();
+    VoidCallback? fixup;
     if (prompt.toLowerCase().contains('grandma')) {
       final recipe = await _searchEmbeddings(prompt);
       buffer.writeln("# Grandma's Recipe:");
       buffer.write(recipe.toString());
       buffer.writeln();
-    }
-    buffer.writeln(prompt);
 
-    yield* _provider.sendMessageStream(
+      fixup = () {
+        // replace the last user message with the prompt that the user actually
+        // entered, not the fixed up prompt we're sending to the LLM
+        final history = _provider.history.toList();
+        final lastUserMessage = history.lastWhere(
+          (m) => m.origin == MessageOrigin.user,
+        );
+        lastUserMessage.text = prompt;
+      };
+    }
+    buffer.write(prompt);
+
+    final response = _provider.sendMessageStream(
       buffer.toString(),
       attachments: attachments,
     );
+
+    await for (final message in response) {
+      // apply any fixups to the message history after the LLM has responded so
+      // we know that the history has been updated
+      if (fixup != null) {
+        await Future.microtask(fixup);
+        fixup = null;
+      }
+
+      yield message;
+    }
   }
 
   List<Recipe>? _grandmasRecipes;
-  List<RecipeEmbedding>? _embeddings;
+  List<RecipeEmbedding>? _grandmasEmbeddings;
 
   Future<Recipe?> _searchEmbeddings(String prompt) async {
-    if (_embeddings == null) {
-      assert(_grandmasRecipes == null);
-      final json = await File('../../recipes_grandma_rag.json').readAsString();
-      _grandmasRecipes = await Recipe.loadFrom(json);
-      _embeddings = await RecipeEmbedding.loadFrom(json);
+    if (_grandmasRecipes == null) {
+      assert(_grandmasEmbeddings == null);
+      final json1 = await File('../../recipes_grandma.json').readAsString();
+      _grandmasRecipes = await Recipe.loadFrom(json1);
+
+      final json2 = await File('../../embeddings_grandma.json').readAsString();
+      _grandmasEmbeddings = await RecipeEmbedding.loadFrom(json2);
     }
 
     final embeddingHelper = GeminiEmbeddingHelper(embeddingModel);
-
     final queryEmbedding = await embeddingHelper.getQueryEmbedding(prompt);
     Recipe? topRecipe;
     var topScore = 0.0;
     for (final recipe in _grandmasRecipes!) {
-      final embedding = _embeddings!.singleWhere((e) => e.id == recipe.id);
+      final embedding = _grandmasEmbeddings!.singleWhere(
+        (e) => e.id == recipe.id,
+      );
+
       final score = GeminiEmbeddingHelper.computeDotProduct(
         queryEmbedding,
         embedding.embedding,
